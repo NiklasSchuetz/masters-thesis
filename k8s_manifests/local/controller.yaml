@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: controller
+  labels:
+    name: controller
+  # namespace: ma-schuetz-dcun
+spec:
+  containers:
+    - name: controller
+      image: controller:latest
+      resources:
+        limits:
+          memory: "1024Mi"
+          cpu: "500m"
+      ports:
+        - containerPort: 50000
+      imagePullPolicy: Never
+  restartPolicy: Never

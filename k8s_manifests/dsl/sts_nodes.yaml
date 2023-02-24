@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: node
+  namespace: ma-schuetz-dcun
+spec:
+  selector:
+    matchLabels:
+      name: node
+  serviceName: stsservice
+  replicas: 250 # Num of nodes
+
+  template:
+    metadata:
+      labels:
+        name: node
+    spec:
+      containers:
+        - name: node
+          image: sl3nx/dcun:node
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 50000
+          # resources:
+          #   requests:
+          #     cpu: "80m"
+          #     memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stsservice
+  namespace: ma-schuetz-dcun
+  labels:
+    name: node
+spec:
+  ports:
+    - port: 50000
+  type: ClusterIP
+  selector:
+    name: node
+---
+

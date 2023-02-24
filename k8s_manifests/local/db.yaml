@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mysql
+  namespace: ma-schuetz-dcun
+  labels:
+    name: mysql
+
+spec:
+  containers:
+    - name: mysql
+      image: mysql:5.6
+      ports:
+        - containerPort: 3306
+          name: mysql
+      volumeMounts:
+        - name: mysql-initdb
+          mountPath: /docker-entrypoint-initdb.d
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      resources:
+        limits:
+          memory: "20Gi"
+          cpu: "2"
+
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: root
+
+  volumes:
+    - name: mysql-initdb
+      configMap:
+        name: mysql-initdb-config
+
+    - name: mysql-persistent-storage
+      persistentVolumeClaim:
+        claimName: mysql-pv-claim
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-initdb-config
+  namespace: ma-schuetz-dcun
+data:
+  initdb.sql: |
+    CREATE DATABASE DB;
+    CREATE TABLE history (run_id INT, node_id INT, partner_id INT, new_value INT, synchro_done INT );
+    CREATE TABLE neighbors (node INT, neighbor INT);
+
+    CREATE TABLE RUN (run_id INT, synchro_module VARCHAR(30));
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: ma-schuetz-dcun
+spec:
+  selector:
+    name: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv-volume
+  namespace: ma-schuetz-dcun
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+  namespace: ma-schuetz-dcun
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

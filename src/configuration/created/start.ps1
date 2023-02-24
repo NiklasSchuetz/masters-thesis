@@ -1,0 +1,1 @@
+kubectl exec -it controller -- python control.py
